@@ -13,7 +13,7 @@ public class DebugGridVisual : MonoBehaviour
         _cellObjects = new GameObject[gridDimensionsX, gridDimensionsY];
 
         RectTransform rectTransform = GetComponent<RectTransform>();
-        float cellSize = 10f;
+        float cellSize = 15f;
 
         // Calculate the total size of the grid
         float gridWidth = gridDimensionsX * cellSize;
