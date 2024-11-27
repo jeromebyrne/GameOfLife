@@ -7,6 +7,6 @@ public class DebugCellVisual : MonoBehaviour
 
     public void SetAlive(bool isAlive)
     {
-        _image.color = isAlive ? Color.green : Color.white;
+        _image.color = isAlive ? Color.green : Color.grey;
     }
 }
