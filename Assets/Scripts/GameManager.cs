@@ -10,9 +10,13 @@ public class GameManager : MonoBehaviour
     private int[,] _nextCellGrid = new int[kGridDimensionsX, kGridDimensionsY];
     private float _timer;
 
+    [SerializeField] DebugGridVisual _debugGridVisual = null;
+
     void Start()
     {
         InitGrid();
+
+        _debugGridVisual.Init(kGridDimensionsX, kGridDimensionsY);
     }
 
     void Update()
@@ -23,7 +27,7 @@ public class GameManager : MonoBehaviour
         {
             _timer = kTickInterval;
             UpdateGrid();
-            PrintGridToConsole();
+            _debugGridVisual.UpdateGridVisual(_cellGrid);
         }
     }
 
