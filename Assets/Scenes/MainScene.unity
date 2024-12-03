@@ -266,21 +266,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 324629121}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8a8695521f0d02e499659fee002a26c2, type: 3}
+  m_Script: {fileID: 11500000, guid: d9bfad1fbf6fe4e1ea06372982c878f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Padding:
-    m_Left: 0
-    m_Right: 0
-    m_Top: 0
-    m_Bottom: 0
-  m_ChildAlignment: 0
-  m_StartCorner: 0
-  m_StartAxis: 0
-  m_CellSize: {x: 20, y: 20}
-  m_Spacing: {x: 1, y: 1}
-  m_Constraint: 0
-  m_ConstraintCount: 2
+  _cellPrefab: {fileID: 6544105777418132294, guid: dd8b024770fde492db60c9d025204401, type: 3}
 --- !u!1 &379948780
 GameObject:
   m_ObjectHideFlags: 0
@@ -526,6 +515,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f5ca7e129fbdf49958851281baa2516d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _debugGridVisual: {fileID: 324629123}
 --- !u!4 &1376070358
 Transform:
   m_ObjectHideFlags: 0
