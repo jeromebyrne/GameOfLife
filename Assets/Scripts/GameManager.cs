@@ -1,22 +1,21 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour
 {
-    private const int kGridDimensionsX = 25;
-    private const int kGridDimensionsY = 25;
     private const float kTickInterval = 0.5f;
-
-    private int[,] _cellGrid = new int[kGridDimensionsX, kGridDimensionsY];
-    private int[,] _nextCellGrid = new int[kGridDimensionsX, kGridDimensionsY];
     private float _timer;
+
+    private Dictionary<Vector2Int, int> _sparseGrid = new Dictionary<Vector2Int, int>();
+    private Dictionary<Vector2Int, int> _newSparseGrid = new Dictionary<Vector2Int, int>();
+    private HashSet<Vector2Int> _cellsToCheck = new HashSet<Vector2Int>();
 
     [SerializeField] DebugGridVisual _debugGridVisual = null;
 
     void Start()
     {
-        InitGrid();
-
-        _debugGridVisual.Init(kGridDimensionsX, kGridDimensionsY);
+        InitSparseGrid();
+        _debugGridVisual.Init(25, 25);
     }
 
     void Update()
@@ -26,91 +25,96 @@ public class GameManager : MonoBehaviour
         if (_timer <= 0.0f)
         {
             _timer = kTickInterval;
-            UpdateGrid();
-            _debugGridVisual.UpdateGridVisual(_cellGrid);
+            UpdateSparseGrid();
+            _debugGridVisual.UpdateGridVisual(_sparseGrid);
         }
     }
 
-    void InitGrid()
+    void InitSparseGrid()
     {
-        // Clear the grid
-        for (int x = 0; x < kGridDimensionsX; x++)
+        _sparseGrid.Clear();
+
+        // Initialize the "Glider" pattern
+        AddCell(new Vector2Int(12, 11), 1);
+        AddCell(new Vector2Int(13, 12), 1);
+        AddCell(new Vector2Int(11, 13), 1);
+        AddCell(new Vector2Int(12, 13), 1);
+        AddCell(new Vector2Int(13, 13), 1);
+    }
+
+    void AddCell(Vector2Int position, int state)
+    {
+        if (state == 1)
         {
-            for (int y = 0; y < kGridDimensionsY; y++)
+            _sparseGrid[position] = state;
+        }
+        else if (_sparseGrid.ContainsKey(position))
+        {
+            _sparseGrid.Remove(position);
+        }
+    }
+
+    void UpdateSparseGrid()
+    {
+        // Clear reused collections
+        _newSparseGrid.Clear();
+        _cellsToCheck.Clear();
+
+        // Add all active cells and their neighbors to the check list
+        foreach (var cell in _sparseGrid.Keys)
+        {
+            _cellsToCheck.Add(cell);
+
+            for (int offsetX = -1; offsetX <= 1; offsetX++)
             {
-                _cellGrid[x, y] = 0;
+                for (int offsetY = -1; offsetY <= 1; offsetY++)
+                {
+                    if (offsetX == 0 && offsetY == 0) continue;
+                    _cellsToCheck.Add(cell + new Vector2Int(offsetX, offsetY));
+                }
             }
         }
 
-        // Hardcoding the "Glider" pattern for the initial seed
-        _cellGrid[12, 11] = 1;
-        _cellGrid[13, 12] = 1;
-        _cellGrid[11, 13] = 1;
-        _cellGrid[12, 13] = 1;
-        _cellGrid[13, 13] = 1;
-    }
-
-    void UpdateGrid()
-    {
-        for (int x = 0; x < kGridDimensionsX; x++)
+        // Evaluate each cell in the check list
+        foreach (var cell in _cellsToCheck)
         {
-            for (int y = 0; y < kGridDimensionsY; y++)
-            {
-                int liveNeighbors = GetNumLiveNeighbors(x, y);
+            int liveNeighbors = CountLiveNeighbors(cell);
+            bool isAlive = _sparseGrid.ContainsKey(cell) && _sparseGrid[cell] == 1;
 
-                if (_cellGrid[x, y] == 1)
-                {
-                    // Underpopulation or Overcrowding
-                    _nextCellGrid[x, y] = (liveNeighbors < 2 || liveNeighbors > 3) ? 0 : 1;
-                }
-                else
-                {
-                    // The cell can reproduce
-                    _nextCellGrid[x, y] = (liveNeighbors == 3) ? 1 : 0;
-                }
+            if (isAlive && (liveNeighbors == 2 || liveNeighbors == 3))
+            {
+                _newSparseGrid[cell] = 1; // Cell stays alive
+            }
+            else if (!isAlive && liveNeighbors == 3)
+            {
+                _newSparseGrid[cell] = 1; // Cell becomes alive
             }
         }
 
-        // Swap the grids 
-        var temp = _cellGrid;
-        _cellGrid = _nextCellGrid;
-        _nextCellGrid = temp;
+        // Replace the sparse grid with the updated one
+        var temp = _sparseGrid;
+        _sparseGrid = _newSparseGrid;
+        _newSparseGrid = temp;
     }
 
-    int GetNumLiveNeighbors(int cellX, int cellY)
+    int CountLiveNeighbors(Vector2Int cell)
     {
-        int liveNeighborCount = 0;
+        int liveNeighbors = 0;
 
         for (int offsetX = -1; offsetX <= 1; offsetX++)
         {
             for (int offsetY = -1; offsetY <= 1; offsetY++)
             {
-                if (offsetX == 0 && offsetY == 0) continue; // Skip the cell itself
+                if (offsetX == 0 && offsetY == 0) continue;
 
-                int neighborX = cellX + offsetX;
-                int neighborY = cellY + offsetY;
-
-                if (neighborX >= 0 && neighborX < kGridDimensionsX && neighborY >= 0 && neighborY < kGridDimensionsY)
+                Vector2Int neighbor = cell + new Vector2Int(offsetX, offsetY);
+                if (_sparseGrid.ContainsKey(neighbor) && _sparseGrid[neighbor] == 1)
                 {
-                    liveNeighborCount += _cellGrid[neighborX, neighborY];
+                    liveNeighbors++;
                 }
             }
         }
 
-        return liveNeighborCount;
-    }
-
-    void PrintGridToConsole()
-    {
-        string gridOutput = "";
-        for (int y = 0; y < kGridDimensionsY; y++)
-        {
-            for (int x = 0; x < kGridDimensionsX; x++)
-            {
-                gridOutput += (_cellGrid[x, y] == 1 ? "O" : ".");
-            }
-            gridOutput += "\n";
-        }
-        Debug.Log(gridOutput);
+        return liveNeighbors;
     }
 }
